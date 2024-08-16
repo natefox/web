@@ -629,6 +629,36 @@ function piholeStatus()
     return $ret;
 }
 
+// wait_for_status will poll for FTL to be $expected status
+// the returned status will be the actual status: "enabled" or "disabled"
+// Returns 'FTLnotrunning' if FTL is not running.
+function wait_for_status($expected, $timeout_sec=2, $sleep_ms=10)
+{
+    $endtime = time() + $timeout_sec;
+    while (time() < $endtime)
+    {
+        $curr_status = piholeStatus();
+        if (
+            ($curr_status > 0 && $expected == "enabled")
+            or
+            ($curr_status === 0 && $expected == "disabled")
+        ) {
+            // one of the expected matched the current status, return immediately
+            return $expected;
+        } elseif ($curr_status == -1) {
+            // if its not running, return immediately
+            return "FTLnotrunning";
+        } elseif ($curr_status == -2) {
+            // pass along the unknown error immediately
+            return "UnknownError";
+        }
+        usleep($sleep_ms * 1000);
+    }
+
+    // timed out, return latest status as text
+    return $curr_status ? "enabled" : "disabled";
+}
+
 // Returns the default gateway address and interface
 function getGateway()
 {

@@ -12,6 +12,7 @@ require_once 'scripts/pi-hole/php/password.php';
 require_once 'scripts/pi-hole/php/FTL.php';
 require_once 'scripts/pi-hole/php/database.php';
 require_once 'scripts/pi-hole/php/auth.php';
+require_once 'scripts/pi-hole/php/func.php';
 check_cors();
 
 $data = array();
@@ -27,7 +28,8 @@ if (isset($_GET['enable']) && $auth) {
         check_csrf($_GET['token']);
     }
     pihole_execute('enable');
-    $data = array_merge($data, array('status' => 'enabled'));
+    $status = wait_for_status('enabled');
+    $data = array_merge($data, array('status' => $status));
     if (file_exists('../custom_disable_timer')) {
         unlink('../custom_disable_timer');
     }
@@ -52,7 +54,8 @@ if (isset($_GET['enable']) && $auth) {
             unlink('../custom_disable_timer');
         }
     }
-    $data = array_merge($data, array('status' => 'disabled'));
+    $status = wait_for_status('disabled');
+    $data = array_merge($data, array('status' => $status));
 } elseif (isset($_GET['versions'])) {
     // Determine if updates are available for Pi-hole
     // using the same script that we use for the footer
